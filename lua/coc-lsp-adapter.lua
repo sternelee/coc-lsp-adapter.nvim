@@ -71,7 +71,7 @@ local function get_coc_clients(filter)
             return true
         end
 
-        -- Support services exposing numeric IDs while filters may use strings (and vice versa).
+        -- Support services exposing numeric IDs while filters may use strings (and vice versa) by storing both representations.
         clients_by_id[id] = client
         clients_by_id[tostring(id)] = client
         table.insert(coc_clients, client)
@@ -80,7 +80,7 @@ local function get_coc_clients(filter)
     end
     if type(filter.id) == 'number' or type(filter.id) == 'string' then
         -- Coc services may expose numeric or string IDs; normalize for lookup.
-        local client = clients_by_id[filter.id] or clients_by_id[tostring(filter.id)]
+        local client = clients_by_id[filter.id]
         return client and { client } or {}
     end
     if type(filter.name) == 'string' then
@@ -133,7 +133,7 @@ end
 
 local function buf_get_clients(bufnr)
     return get_active_clients({
-        -- bufnr for newer APIs (e.g. Neovim 0.10+ get_clients); buffer for older filters.
+        -- bufnr for newer APIs (e.g. Neovim 0.10+ filters); buffer for older buf_get_clients filters.
         bufnr = bufnr,
         buffer = bufnr,
     })
