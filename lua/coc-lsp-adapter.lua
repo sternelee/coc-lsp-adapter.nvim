@@ -2,6 +2,8 @@ local M = {}
 
 local native = {
     get_active_clients = vim.lsp.get_active_clients,
+    get_clients = vim.lsp.get_clients,
+    get_client_by_id = vim.lsp.get_client_by_id,
     buf_get_clients = vim.lsp.buf_get_clients,
 }
 
@@ -24,12 +26,9 @@ local server_capabilities = {
 
 local coc_services
 local async_counter = 0
-local function get_active_clients(filter)
+local function get_coc_clients(filter)
     filter = filter or {}
-    local native_clients = native.get_active_clients(filter)
-    if vim.tbl_count(native_clients) > 0 or vim.g.coc_enabled ~= 1 then
-        return native_clients
-    end
+    local clients_by_id = {}
     local coc_clients = {}
     if async_counter < 0 then
         async_counter = 0
@@ -41,7 +40,6 @@ local function get_active_clients(filter)
         if service.state ~= 'running' then
             goto skip_coc_service
         end
-
         local client = {
             id = id,
             name = service.id,
@@ -73,12 +71,17 @@ local function get_active_clients(filter)
             return true
         end
 
+        -- Support services exposing numeric IDs while filters may use strings (and vice versa) by storing both representations.
+        clients_by_id[id] = client
+        clients_by_id[tostring(id)] = client
         table.insert(coc_clients, client)
 
         ::skip_coc_service::
     end
-    if type(filter.id) == 'number' then
-        return { coc_clients[filter.id] }
+    if type(filter.id) == 'number' or type(filter.id) == 'string' then
+        -- Coc services may expose numeric or string IDs; normalize for lookup.
+        local client = clients_by_id[filter.id]
+        return client and { client } or {}
     end
     if type(filter.name) == 'string' then
         for _, client in pairs(coc_clients) do
@@ -91,8 +94,47 @@ local function get_active_clients(filter)
     return coc_clients
 end
 
+local function get_active_clients(filter)
+    filter = filter or {}
+    local native_clients = {}
+    if native.get_active_clients then
+        native_clients = native.get_active_clients(filter) or {}
+    elseif native.get_clients then
+        -- Compatibility for Neovim versions exposing only get_clients.
+        native_clients = native.get_clients(filter) or {}
+    end
+    if vim.tbl_count(native_clients) > 0 or vim.g.coc_enabled ~= 1 then
+        return native_clients
+    end
+    return get_coc_clients(filter)
+end
+
+local function get_clients(filter)
+    filter = filter or {}
+    if native.get_clients then
+        local native_clients = native.get_clients(filter) or {}
+        if vim.tbl_count(native_clients) > 0 or vim.g.coc_enabled ~= 1 then
+            return native_clients
+        end
+    end
+    return get_coc_clients(filter)
+end
+
+local function get_client_by_id(id)
+    if native.get_client_by_id then
+        local client = native.get_client_by_id(id)
+        if client ~= nil or vim.g.coc_enabled ~= 1 then
+            return client
+        end
+    end
+    local clients = get_coc_clients({ id = id })
+    return clients[1]
+end
+
 local function buf_get_clients(bufnr)
     return get_active_clients({
+        -- bufnr for newer APIs (e.g. Neovim 0.10+ filters); buffer for older buf_get_clients filters.
+        bufnr = bufnr,
         buffer = bufnr,
     })
 end
@@ -101,11 +143,15 @@ M.native = native
 M.server_capabilities = server_capabilities
 M.lsp = {
     get_active_clients = get_active_clients,
+    get_clients = get_clients,
+    get_client_by_id = get_client_by_id,
     buf_get_clients = buf_get_clients,
 }
 
 function M.setup()
     vim.lsp.get_active_clients = get_active_clients
+    vim.lsp.get_clients = get_clients
+    vim.lsp.get_client_by_id = get_client_by_id
     vim.lsp.buf_get_clients = buf_get_clients
 end
 
