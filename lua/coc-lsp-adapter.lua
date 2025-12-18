@@ -72,13 +72,16 @@ local function get_coc_clients(filter)
             return true
         end
 
+        if id == nil then
+            goto skip_coc_service
+        end
         clients_by_id[tostring(id)] = client
         table.insert(coc_clients, client)
 
         ::skip_coc_service::
     end
     if type(filter.id) == 'number' or type(filter.id) == 'string' then
-        -- Coc services may expose numeric or string IDs; normalise for lookup.
+        -- Coc services may expose numeric or string IDs; normalize for lookup.
         local client = clients_by_id[tostring(filter.id)]
         return client and { client } or {}
     end
