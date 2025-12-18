@@ -133,7 +133,9 @@ end
 
 local function buf_get_clients(bufnr)
     return get_clients({
+        -- Keep both keys for compatibility with different filter expectations.
         bufnr = bufnr,
+        buffer = bufnr,
     })
 end
 
