@@ -78,6 +78,7 @@ local function get_coc_clients(filter)
         ::skip_coc_service::
     end
     if type(filter.id) == 'number' or type(filter.id) == 'string' then
+        -- Coc services may expose numeric or string IDs; normalise for lookup.
         local client = clients_by_id[tostring(filter.id)]
         return client and { client } or {}
     end
@@ -98,6 +99,7 @@ local function get_active_clients(filter)
     if native.get_active_clients then
         native_clients = native.get_active_clients(filter) or {}
     elseif native.get_clients then
+        -- Compatibility for Neovim versions exposing only get_clients.
         native_clients = native.get_clients(filter) or {}
     end
     if vim.tbl_count(native_clients) > 0 or vim.g.coc_enabled ~= 1 then
