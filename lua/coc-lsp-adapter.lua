@@ -98,9 +98,9 @@ local function get_active_clients(filter)
     filter = filter or {}
     local native_clients = {}
     if native.get_active_clients then
-        native_clients = native.get_active_clients(filter)
+        native_clients = native.get_active_clients(filter) or {}
     elseif native.get_clients then
-        native_clients = native.get_clients(filter)
+        native_clients = native.get_clients(filter) or {}
     end
     if vim.tbl_count(native_clients) > 0 or vim.g.coc_enabled ~= 1 then
         return native_clients
@@ -111,7 +111,7 @@ end
 local function get_clients(filter)
     filter = filter or {}
     if native.get_clients then
-        local native_clients = native.get_clients(filter)
+        local native_clients = native.get_clients(filter) or {}
         if vim.tbl_count(native_clients) > 0 or vim.g.coc_enabled ~= 1 then
             return native_clients
         end
