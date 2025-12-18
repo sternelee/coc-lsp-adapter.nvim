@@ -28,6 +28,7 @@ local coc_services
 local async_counter = 0
 local function get_coc_clients(filter)
     filter = filter or {}
+    local clients_by_id = {}
     local coc_clients = {}
     if async_counter < 0 then
         async_counter = 0
@@ -71,18 +72,14 @@ local function get_coc_clients(filter)
             return true
         end
 
+        clients_by_id[tostring(id)] = client
         table.insert(coc_clients, client)
 
         ::skip_coc_service::
     end
     if filter.id ~= nil then
-        local filter_id = tostring(filter.id)
-        for _, client in pairs(coc_clients) do
-            if tostring(client.id) == filter_id then
-                return { client }
-            end
-        end
-        return {}
+        local client = clients_by_id[tostring(filter.id)]
+        return client and { client } or {}
     end
     if type(filter.name) == 'string' then
         for _, client in pairs(coc_clients) do
@@ -133,7 +130,7 @@ end
 
 local function buf_get_clients(bufnr)
     return get_clients({
-        -- Keep both keys for compatibility with different filter expectations.
+        -- bufnr for newer APIs; buffer for compatibility with older filters.
         bufnr = bufnr,
         buffer = bufnr,
     })
