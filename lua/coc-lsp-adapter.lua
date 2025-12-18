@@ -77,7 +77,7 @@ local function get_coc_clients(filter)
 
         ::skip_coc_service::
     end
-    if filter.id ~= nil then
+    if type(filter.id) == 'number' or type(filter.id) == 'string' then
         local client = clients_by_id[tostring(filter.id)]
         return client and { client } or {}
     end
@@ -129,7 +129,7 @@ local function get_client_by_id(id)
 end
 
 local function buf_get_clients(bufnr)
-    return get_clients({
+    return get_active_clients({
         -- bufnr for newer APIs; buffer for compatibility with older filters.
         bufnr = bufnr,
         buffer = bufnr,
