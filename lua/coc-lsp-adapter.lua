@@ -40,10 +40,6 @@ local function get_coc_clients(filter)
         if service.state ~= 'running' then
             goto skip_coc_service
         end
-        if id == nil then
-            goto skip_coc_service
-        end
-
         local client = {
             id = id,
             name = service.id,
@@ -83,7 +79,7 @@ local function get_coc_clients(filter)
     end
     if type(filter.id) == 'number' or type(filter.id) == 'string' then
         -- Coc services may expose numeric or string IDs; normalize for lookup.
-        local client = clients_by_id[filter.id] or clients_by_id[tostring(filter.id)]
+        local client = clients_by_id[filter.id]
         return client and { client } or {}
     end
     if type(filter.name) == 'string' then
